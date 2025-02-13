@@ -8,7 +8,7 @@ onbreak {resume}
 # create library
 vlib worklib
 
-vcom -lint -work worklib fma16.vhd
+vcom -2008 -lint -work worklib fma16.vhd
 vlog -lint -sv -work worklib testbench.sv
 vopt +acc worklib.testbench_fma16 -work worklib -o testbenchopt
 vsim -lib worklib testbenchopt

@@ -12,7 +12,7 @@ entity fma16 is
          add:       in  STD_LOGIC;
          negp:      in  STD_LOGIC;
          negz:      in  STD_LOGIC;
-         roundmode: in  STD_LOGIC_VECTOR( 2 downto 0);
+         roundmode: in  STD_LOGIC_VECTOR( 1 downto 0);
          result:    out STD_LOGIC_VECTOR(15 downto 0);
          flags:     out STD_LOGIC_VECTOR( 3 downto 0));
     end;
@@ -29,6 +29,8 @@ entity fma16 is
             variable P_s:        STD_LOGIC;
             variable Pe:         STD_LOGIC_VECTOR( 4 downto 0);
             variable Pm:         STD_LOGIC_VECTOR(21 downto 0);
+            variable PmS:        STD_LOGIC_VECTOR(21 downto 0);
+            variable Pf:         STD_LOGIC_VECTOR( 9 downto 0);
         begin
 
             Xs := x(15);
@@ -42,11 +44,15 @@ entity fma16 is
             Zm := '1' & z(9 downto 0);
 
             Pm  := Xm * Ym;
-            Pe  := Xe + Ye - '01111' + Pm(21);
-            P_s := Xs xor Xy;
+            Pe  := Xe + Ye - "01111" + Pm(21);
+            P_s := Xs xor Ys;
+            PmS := (Pm sll 1) when Pm(21) = '0' else Pm;
+            Pf  := PmS(20 downto 11);
 
+            result <= (P_s & Pe & Pf);
 
-        end process 
+            flags <= "0000";
+        end process;
             
 
     end;
