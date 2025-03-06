@@ -28,35 +28,20 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module hazard (
-    input  logic BPWrongE,
-    CSRWriteFenceM,
-    RetM,
-    TrapM,
+    input  logic BPWrongE, CSRWriteFenceM, RetM, TrapM,
     input  logic StructuralStallD,
-    input  logic LSUStallM,
-    IFUStallF,
-    FetchBufferStallF,
-    input  logic FPUStallD,
-    ExternalStall,
-    input  logic DivBusyE,
-    FDivBusyE,
-    input  logic wfiM,
-    IntPendingM,
+    input  logic LSUStallM, IFUStallF, FetchBufferStallF,
+    input  logic FPUStallD, ExternalStall,
+    input  logic DivBusyE, FDivBusyE,
+    input  logic wfiM, IntPendingM,
     // Stall & flush outputs
-    output logic StallF, StallFBF,
-    StallD,
-    StallE,
-    StallM,
-    StallW,
-    output logic FlushD,
-    FlushE,
-    FlushM,
-    FlushW
+    output logic StallF, StallFBF, StallD, StallE, StallM, StallW,
+    output logic FlushD, FlushE, FlushM, FlushW
 );
 
-  logic StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
-  logic LatestUnstalledD, LatestUnstalledE, LatestUnstalledM, LatestUnstalledW;
-  logic FlushDCause, FlushECause, FlushMCause, FlushWCause;
+  logic          StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
+  logic          LatestUnstalledD, LatestUnstalledE, LatestUnstalledM, LatestUnstalledW;
+  logic          FlushDCause, FlushECause, FlushMCause, FlushWCause;
 
   logic WFIStallM, WFIInterruptedM;
 
@@ -97,9 +82,19 @@ module hazard (
   //  The IFU and LSU stall the entire pipeline on a cache miss, bus access, or other long operation.
   //    The IFU stalls the entire pipeline rather than just Fetch to avoid complications with instructions later in the pipeline causing Exceptions
   //    A trap could be asserted at the start of a IFU/LSU stall, and should flush the memory operation
-  assign StallFBF = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause);
-  assign StallFCause = StallFBF | FetchBufferStallF;
-  assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause; // TODO: add stall if empty fetch buffer
+  if (P.FETCHBUFFER_ENTRIES != 0) begin
+    assign StallFBF = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause);
+    assign StallFCause = StallFBF | FetchBufferStallF;
+    assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause; // TODO: add stall if empty fetch buffer
+    assign StallF = StallFCause;
+  end else begin
+    assign StallFBF = 1'b0;
+    assign StallFCause = 1'b0;
+    assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
+    // coverage off: StallFCause is always 0
+    assign StallF = StallFCause | StallD;
+    // coverage on
+  end
   assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause;
   assign StallMCause = WFIStallM & ~FlushMCause;
   // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
@@ -108,9 +103,7 @@ module hazard (
   assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall;
 
   // Stall each stage for cause or if the next stage is stalled
-  // coverage off: StallFCause is always 0
-  assign StallF = StallFCause;
-  // coverage on
+  //     StallF dependant on Fetch buffer support, see above
   assign StallD = StallDCause | StallE;
   assign StallE = StallECause | StallM;
   assign StallM = StallMCause | StallW;
