@@ -28,48 +28,59 @@
 
 module fetchbuffer import cvw::*; #(parameter cvw_t P, parameter WIDTH = 32) (
     input  logic                      clk,  reset,
-    input  logic                      StallF, StallD, FlushD,
+    input  logic                      StallFBF, StallD, FlushD,
     input  logic [WIDTH-1:0]          nop,
     input  logic [P.XLEN + WIDTH-1:0] WriteData,
     output logic [P.XLEN + WIDTH-1:0] ReadData,
-    output logic                      FetchBufferStallF,
-    output logic                      RisingFBStallF
+    output logic                      FetchBufferStallF
+    // output logic                      RisingFBStallF
 );
-  logic [P.XLEN + WIDTH-1:0] ReadReg         [P.FETCHBUFFER_ENTRIES-1:0];
-  logic [P.XLEN + WIDTH-1:0] ReadFetchBuffer;
-  logic [P.FETCHBUFFER_ENTRIES-1:0] ReadPtr, WritePtr;
-  logic Empty, Full;
+  logic                             WriteEnable, ReadEnable;
+  logic                             Empty, Full, FullDelay, FullRisingEdge;           // Full edge detection 
+  logic [P.FETCHBUFFER_ENTRIES-1:0] ReadPtr, WritePtr;                                // One-hot encoded read and write pointers
+  logic [P.FETCHBUFFER_ENTRIES-1:0] WriteEnableOH;                                    // One-hot encoded write enable for flop array
+  logic [P.XLEN + WIDTH-1:0]        ReadReg            [P.FETCHBUFFER_ENTRIES - 1:0]; // Outputs of FIFO registers
+  logic [P.XLEN + WIDTH-1:0]        DaoArr             [P.FETCHBUFFER_ENTRIES - 1:0]; // Array of dist. and-or mux entries
+  logic [P.XLEN + WIDTH-1:0]        ReadFetchBuffer;                                  // Output of dist. and-or mux 
 
   assign Empty  = |(ReadPtr & WritePtr); // Bitwise and the read&write ptr, and or the bits of the result together
   assign Full   = |({WritePtr[P.FETCHBUFFER_ENTRIES-2:0], WritePtr[P.FETCHBUFFER_ENTRIES-1]} & ReadPtr); // Same as above but left rotate WritePtr to "add 1"
   assign FetchBufferStallF = Full;
 
-  logic [P.FETCHBUFFER_ENTRIES-1:0] fbEnable;
+  // Full signal edge detection
+  always_ff @(posedge clk) 
+    if (reset) FullDelay <= 0;
+    else       FullDelay <= Full;
+  assign FullRisingEdge = Full & ~FullDelay;
 
-  logic FetchBufferStallFDelay;
-  assign RisingFBStallF = ~FetchBufferStallFDelay & FetchBufferStallF;
+  assign WriteEnable   = (~Full & ~StallFBF) | FullRisingEdge;
+  assign ReadEnable    = ~StallD & ~Empty;
+  assign WriteEnableOH = {P.FETCHBUFFER_ENTRIES{WriteEnable}} & WritePtr;
 
-  flop #(1) flop1 (clk, FetchBufferStallF, FetchBufferStallFDelay);
-  assign fbEnable = WritePtr & {P.FETCHBUFFER_ENTRIES{(~Full | RisingFBStallF)}};
-  flopenl #(P.XLEN + WIDTH) fbEntries[P.FETCHBUFFER_ENTRIES-1:0] (.clk, .load(reset | FlushD), .en(fbEnable), .d(WriteData), .val({{P.XLEN{1'b0}}, nop}), .q(ReadReg));
+  // FIFO entries created with an array of enableable and loadable flip-flops
+  // TODO: Maybe change to read on falling clk edge
+  flopenl #(P.XLEN + WIDTH) fbEntries[P.FETCHBUFFER_ENTRIES-1:0] (.clk, .load(reset | FlushD), .en(WriteEnableOH), .d(WriteData), .val({{P.XLEN{1'b0}}, nop}), .q(ReadReg));
 
-  logic [P.XLEN + WIDTH-1:0] DaoArr [P.FETCHBUFFER_ENTRIES - 1:0];
-
+  // Distributed and-or mux
   for (genvar i = 0; i < P.FETCHBUFFER_ENTRIES; i++) begin
+    // And the output of each FIFO entry with the corresponding write pointer bit
     assign DaoArr[i] = ReadPtr[i] ? ReadReg[i] : '0;
   end
-
+  // or the above array entries together to select the entry to read
   or_rows #(P.FETCHBUFFER_ENTRIES, P.XLEN + WIDTH) ReadFBAOMux (.a(DaoArr), .y(ReadFetchBuffer));
 
+  // if empty, read a nop with PC = 0 rather than the FIFO entry
   assign ReadData = Empty ? {{P.XLEN{1'b0}}, nop} : ReadFetchBuffer;
 
+  // Pointer logic
   always_ff @(posedge clk) begin : shiftRegister
-    if (reset) begin
+    if (reset | FlushD) begin
       WritePtr <= {{P.FETCHBUFFER_ENTRIES - 1{1'b0}}, 1'b1};
       ReadPtr  <= {{P.FETCHBUFFER_ENTRIES - 1{1'b0}}, 1'b1};
     end else begin
-      WritePtr <= ~(Full | StallF)? {WritePtr[P.FETCHBUFFER_ENTRIES-2:0], WritePtr[P.FETCHBUFFER_ENTRIES-1]} : WritePtr;
-      ReadPtr <= ~(StallD | Empty) ? {ReadPtr[P.FETCHBUFFER_ENTRIES-2:0], ReadPtr[P.FETCHBUFFER_ENTRIES-1]} : ReadPtr;
+      // rotate the pointers unless write or read is disabled (internally or due to a stall)
+      WritePtr <= WriteEnable ? {WritePtr[P.FETCHBUFFER_ENTRIES-2:0], WritePtr[P.FETCHBUFFER_ENTRIES-1]} : WritePtr;
+      ReadPtr  <= ReadEnable  ? {ReadPtr[P.FETCHBUFFER_ENTRIES-2:0],   ReadPtr[P.FETCHBUFFER_ENTRIES-1]} : ReadPtr;
     end
   end
 endmodule
