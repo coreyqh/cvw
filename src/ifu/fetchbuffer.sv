@@ -32,8 +32,8 @@ module fetchbuffer import cvw::*; #(parameter cvw_t P, parameter WIDTH = 32) (
     input  logic [WIDTH-1:0]          nop,
     input  logic [P.XLEN + WIDTH-1:0] WriteData,
     output logic [P.XLEN + WIDTH-1:0] ReadData,
-    output logic                      FetchBufferStallF
-    // output logic                      RisingFBStallF
+    output logic                      FetchBufferStallF,
+    output logic                      NoStallPCF
 );
   logic                             WriteEnable, ReadEnable;
   logic                             Empty, Full, FullDelay, FullRisingEdge;           // Full edge detection 
@@ -52,9 +52,10 @@ module fetchbuffer import cvw::*; #(parameter cvw_t P, parameter WIDTH = 32) (
     if (reset) FullDelay <= 0;
     else       FullDelay <= Full;
   assign FullRisingEdge = Full & ~FullDelay;
+  assign NoStallPCF = FullRisingEdge & ReadEnable; // ???
 
-  assign WriteEnable   = (~Full & ~StallFBF) | FullRisingEdge;
   assign ReadEnable    = ~StallD & ~Empty;
+  assign WriteEnable   = (~Full | (FullRisingEdge & ReadEnable)) & ~StallFBF ; // "SOME SPECIAL CASE"
   assign WriteEnableOH = {P.FETCHBUFFER_ENTRIES{WriteEnable}} & WritePtr;
 
   // FIFO entries created with an array of enableable and loadable flip-flops
@@ -63,7 +64,7 @@ module fetchbuffer import cvw::*; #(parameter cvw_t P, parameter WIDTH = 32) (
 
   // Distributed and-or mux
   for (genvar i = 0; i < P.FETCHBUFFER_ENTRIES; i++) begin
-    // And the output of each FIFO entry with the corresponding write pointer bit
+    // & the output of each FIFO entry with the corresponding write pointer bit
     assign DaoArr[i] = ReadPtr[i] ? ReadReg[i] : '0;
   end
   // or the above array entries together to select the entry to read

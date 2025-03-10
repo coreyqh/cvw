@@ -82,11 +82,71 @@ module hazard import cvw::*; #(parameter cvw_t P) (
   //  The IFU and LSU stall the entire pipeline on a cache miss, bus access, or other long operation.
   //    The IFU stalls the entire pipeline rather than just Fetch to avoid complications with instructions later in the pipeline causing Exceptions
   //    A trap could be asserted at the start of a IFU/LSU stall, and should flush the memory operation
+  if (P.FETCHBUFFER_ENTRIES == 0) begin
+    assign StallFCause = 1'b0;
+    assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
+    assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
+    assign StallMCause = WFIStallM & ~FlushMCause;
+    // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
+    // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
+    // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
+    assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall;
+
+    // Stall each stage for cause or if the next stage is stalled
+    // coverage off: StallFCause is always 0
+    assign StallF = StallFCause | StallD;
+    // coverage on
+    assign StallD = StallDCause | StallE;
+    assign StallE = StallECause | StallM;
+    assign StallM = StallMCause | StallW;
+    assign StallW = StallWCause;
+    assign StallFBF = '0;
+  end else begin
+    // // Stall if the FB is full, or the HPTW is busy 
+    // // Maybe should be (LSUStallM & ~FlushWCause & ~<I$ miss signal>) ???
+    // // so that fetch is only stalled when BOTH I$ misses and HPTW is busy
+    // assign StallFCause = FetchBufferStallF | (LSUStallM & ~FlushWCause) | ExternalStall; 
+
+    // assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
+    // assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause;
+    // assign StallMCause = WFIStallM & ~FlushMCause;
+    // assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall; 
+
+    // assign StallFBF = IFUStallF  | ExternalStall;
+    // assign StallF   = StallFCause; 
+    // // breaking stall propagation continuity
+    // assign StallD   = StallDCause | StallE;
+    // assign StallE   = StallECause | StallM;
+    // assign StallM   = StallMCause | StallW;
+    // assign StallW   = StallWCause;
+
+    // assign StallFCause = FetchBufferStallF | (LSUStallM & ~FlushWCause) | ExternalStall;
+    assign StallFCause = ((StructuralStallD | FPUStallD) & ~FlushDCause) | ((DivBusyE | FDivBusyE) & ~FlushECause) | (WFIStallM & ~FlushMCause) | ((IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall);
+    assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
+    assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
+    assign StallMCause = WFIStallM & ~FlushMCause;
+    // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
+    // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
+    // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
+    assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall;
+
+    // Stall each stage for cause or if the next stage is stalled
+    // coverage off: StallFCause is always 0
+    assign StallF = StallFCause;
+    // coverage on
+    assign StallD   = StallDCause | StallE;
+    assign StallE   = StallECause | StallM;
+    assign StallM   = StallMCause | StallW;
+    assign StallW   = StallWCause;
+    assign StallFBF = IFUStallF;
+    // assign StallFBF = IFUStallF | ((DivBusyE | FDivBusyE) & ~FlushECause);
+  end
+  /*
   if (P.FETCHBUFFER_ENTRIES != 0) begin
     assign StallFBF = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause);
-    assign StallFCause = StallFBF | FetchBufferStallF;
+    assign StallFCause = FetchBufferStallF;
     assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause; // TODO: add stall if empty fetch buffer
-    assign StallF = StallFCause;
+    assign StallF = StallFCause | StallD;
   end else begin
     assign StallFBF = 1'b0;
     assign StallFCause = 1'b0;
@@ -108,6 +168,7 @@ module hazard import cvw::*; #(parameter cvw_t P) (
   assign StallE = StallECause | StallM;
   assign StallM = StallMCause | StallW;
   assign StallW = StallWCause;
+*/
 
   // detect the first stage that is not stalled
   assign LatestUnstalledD = 0;

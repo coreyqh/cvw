@@ -143,6 +143,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [31:0]                 ShiftUncachedInstr;
   logic 		       ITLBMissF;
   logic 		       InstrUpdateAF;                            // ITLB hit needs to update dirty or access bits
+  logic                        NoStallPCF;                               // Overwrite PCF stall 
+
 
   assign PCFExt = {2'b00, PCSpillF};
 
@@ -303,17 +305,12 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   assign IFUStallF = IFUCacheBusStallF | SelSpillNextF;
   assign GatedStallD = StallD & ~SelSpillNextF;
 
-  logic NoStallPCF;
   if (P.FETCHBUFFER_ENTRIES != 0) begin : fetchbuffer
-    fetchbuffer #(P) fetchbuff(.clk, .reset, .StallF, .StallD, .FlushD, .nop, .WriteData({PCF, PostSpillInstrRawF}), .ReadData({PCD, InstrRawD}), .FetchBufferStallF, .RisingFBStallF());
-    logic PCFetchBufferStallD, FetchBufferStallFDelay;
-    flop #(1) flop1 (clk, FetchBufferStallF, FetchBufferStallFDelay);
-    assign NoStallPCF = ~FetchBufferStallFDelay & FetchBufferStallF;
-    // fetchbuffer #(P, P.XLEN) PCFetchBuffer(.clk, .reset, .StallF, .StallD, .FlushD, .nop({{1'b1},{(P.XLEN-1){1'b0}}}), .WriteData(PCF), .ReadData(PCD), .FetchBufferStallF(PCFetchBufferStallD), .RisingFBStallF());
+    fetchbuffer #(P) fetchbuff(.clk, .reset, .StallFBF, .StallD, .FlushD, .nop, .WriteData({PCF, PostSpillInstrRawF}), .ReadData({PCD, InstrRawD}), .FetchBufferStallF, .NoStallPCF);
   end else begin
     flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
-    assign FetchBufferStallF = '0;
     flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
+    assign FetchBufferStallF = '0;
     assign NoStallPCF = '0;
   end
 
@@ -327,10 +324,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
   mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
-  logic PCEnable;
-  assign PCEnable = ~StallF | reset | NoStallPCF;
-  // assign PCEnable = ~StallF | reset;
-  flopen #(P.XLEN) pcreg(clk, PCEnable, PCNextF, PCF); //* make this NoStallPCF
+
+  flopen #(P.XLEN) pcreg(clk, (~StallF | reset | NoStallPCF), PCNextF, PCF); 
+  //                                                ^~~~~~~~~~~~~~~~~~~~~~~~~ update PC despite StallF when the fetch buffer asserts NoStallPCF
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
