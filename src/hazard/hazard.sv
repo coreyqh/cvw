@@ -120,15 +120,15 @@ module hazard import cvw::*; #(parameter cvw_t P) (
     // assign StallM   = StallMCause | StallW;
     // assign StallW   = StallWCause;
 
-    // assign StallFCause = FetchBufferStallF | (LSUStallM & ~FlushWCause) | ExternalStall;
-    assign StallFCause = ((StructuralStallD | FPUStallD) & ~FlushDCause) | ((DivBusyE | FDivBusyE) & ~FlushECause) | (WFIStallM & ~FlushMCause) | ((IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall);
+    assign StallFCause = FetchBufferStallF | (LSUStallM & ~FlushWCause) | ExternalStall;
+    // assign StallFCause = ((StructuralStallD | FPUStallD) & ~FlushDCause) | ((DivBusyE | FDivBusyE) & ~FlushECause) | (WFIStallM & ~FlushMCause) | ((IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall);
     assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
     assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
     assign StallMCause = WFIStallM & ~FlushMCause;
     // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
     // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
     // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
-    assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall;
+    assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall; // REVISIT Move all but ext stall to M ?
 
     // Stall each stage for cause or if the next stage is stalled
     // coverage off: StallFCause is always 0

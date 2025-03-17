@@ -325,8 +325,14 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
   mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
 
-  flopen #(P.XLEN) pcreg(clk, (~StallF | reset | NoStallPCF), PCNextF, PCF); 
+  // flopen #(P.XLEN) pcreg(clk, (~StallF | reset | NoStallPCF), PCNextF, PCF); 
   //                                                ^~~~~~~~~~~~~~~~~~~~~~~~~ update PC despite StallF when the fetch buffer asserts NoStallPCF
+  logic StallFDelay;
+  flop #(1) renameMe (.clk, .d(StallF), .q(StallFDelay));
+  logic PCEnable;
+  assign PCEnable = ((~StallFDelay | ~StallF) & ~StallFBF) | reset;
+  flopen #(P.XLEN) pcreg(clk, PCEnable, PCNextF, PCF); 
+
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32

@@ -50,8 +50,22 @@ add wave -noupdate -expand -group HDU -group interrupts /testbench/dut/core/priv
 add wave -noupdate -expand -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/ValidIntsM
 add wave -noupdate -expand -group HDU -group interrupts /testbench/dut/core/hzu/WFIInterruptedM
 add wave -noupdate /testbench/dut/core/StallW
+add wave -noupdate /testbench/dut/core/ifu/NoStallPCF
 add wave -noupdate /testbench/dut/core/hzu/StallWCause
+add wave -noupdate -expand -label {Contributors: Full} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/FBMealy/Full} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadPtr
+add wave -noupdate -expand -label {Contributors: Full} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/FBMealy/Full} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/WritePtr
 add wave -noupdate /testbench/dut/core/hzu/IFUStallF
+add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/WritePtr
+add wave -noupdate -expand -label {Contributors: WritePtr} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/WritePtr} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/FlushD
+add wave -noupdate -expand -label {Contributors: WritePtr} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/WritePtr} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadEnable
+add wave -noupdate -expand -label {Contributors: WritePtr} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/WritePtr} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadPtr
+add wave -noupdate -expand -label {Contributors: WritePtr} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/WritePtr} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/WriteEnable
+add wave -noupdate -expand -label {Contributors: WritePtr} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/WritePtr} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/clk
+add wave -noupdate -expand -label {Contributors: WritePtr} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/WritePtr} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/reset
+add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/WriteEnable
+add wave -noupdate -expand -label {Contributors: WriteEnable} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/WriteEnable} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/Full
+add wave -noupdate -expand -label {Contributors: WriteEnable} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/WriteEnable} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/NoStallPCF
+add wave -noupdate -expand -label {Contributors: WriteEnable} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/WriteEnable} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/StallFBF
 add wave -noupdate -label {Contributors: IFUStallF} -group {Contributors: sim:/testbench/dut/core/hzu/IFUStallF} /testbench/dut/core/ifu/IFUCacheBusStallF
 add wave -noupdate -label {Contributors: IFUStallF} -group {Contributors: sim:/testbench/dut/core/hzu/IFUStallF} /testbench/dut/core/ifu/SelSpillNextF
 add wave -noupdate /testbench/dut/core/ifu/IFUCacheBusStallF
@@ -95,10 +109,18 @@ add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/RetM
 add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/TrapM
 add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/UnalignedPCNextF
 add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/PCNextF
-add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/PCF
 add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/PCD
+add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/PCF
 add wave -noupdate -expand -group PCS /testbench/dut/core/PCE
 add wave -noupdate -expand -group PCS /testbench/dut/core/PCM
+add wave -noupdate /testbench/dut/core/ifu/PCF
+add wave -noupdate -expand -label {Contributors: PCF} -group {Contributors: sim:/testbench/dut/core/ifu/PCF} /testbench/dut/core/ifu/pcreg/clk
+add wave -noupdate -expand -label {Contributors: PCF} -group {Contributors: sim:/testbench/dut/core/ifu/PCF} /testbench/dut/core/ifu/pcreg/d
+add wave -noupdate -expand -label {Contributors: PCF} -group {Contributors: sim:/testbench/dut/core/ifu/PCF} /testbench/dut/core/ifu/pcreg/en
+add wave -noupdate /testbench/dut/core/ifu/pcreg/en
+add wave -noupdate /testbench/dut/core/ifu/pcreg/en
+add wave -noupdate -expand -label {Contributors: en} -group {Contributors: sim:/testbench/dut/core/ifu/pcreg/en} /testbench/dut/core/ifu/renameMe/clk
+add wave -noupdate /testbench/dut/core/ifu/renameMe/d
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCPlus2or4F
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/IEUAdrE
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCSrcE
@@ -117,18 +139,7 @@ add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCSpillNextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCSpillF
-add wave -noupdate -expand -group ifu -group Bpred -group {branch update selection inputs} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRM
-add wave -noupdate -expand -group ifu -group Bpred -group {branch update selection inputs} {/testbench/dut/core/ifu/bpred/bpred/RASPredictor/memory[5]}
-add wave -noupdate -expand -group ifu -group Bpred -group {branch update selection inputs} {/testbench/dut/core/ifu/bpred/bpred/RASPredictor/memory[4]}
-add wave -noupdate -expand -group ifu -group Bpred -group {branch update selection inputs} {/testbench/dut/core/ifu/bpred/bpred/RASPredictor/memory[3]}
-add wave -noupdate -expand -group ifu -group Bpred -group {branch update selection inputs} {/testbench/dut/core/ifu/bpred/bpred/RASPredictor/memory[2]}
-add wave -noupdate -expand -group ifu -group Bpred -group {branch update selection inputs} {/testbench/dut/core/ifu/bpred/bpred/RASPredictor/memory[1]}
-add wave -noupdate -expand -group ifu -group Bpred -group {branch update selection inputs} {/testbench/dut/core/ifu/bpred/bpred/RASPredictor/memory[0]}
-add wave -noupdate -expand -group ifu -group Bpred -group RAS -expand /testbench/dut/core/ifu/bpred/bpred/RASPredictor/memory
-add wave -noupdate -expand -group ifu -group Bpred -group RAS /testbench/dut/core/ifu/bpred/bpred/RASPredictor/Ptr
 add wave -noupdate -expand -group ifu -group Bpred -divider {class check}
-add wave -noupdate -expand -group ifu -group Bpred -group prediction /testbench/dut/core/ifu/bpred/bpred/RASPCF
-add wave -noupdate -expand -group ifu -group Bpred -group prediction -expand -group ex /testbench/dut/core/ifu/bpred/bpred/PCSrcE
 add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/InstrRawF
 add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/PostSpillInstrRawF
 add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/IFUStallF
@@ -275,7 +286,7 @@ add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/ByteMaskM
 add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/ByteMaskExtendedM
 add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/ByteMaskSpillM
 add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/LSUWriteDataM
-add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/LSUWriteDataSpillMroup alignment /testbench/dut/core/lsu/bus/dcache/dcache/WriteData
+add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/bus/dcache/dcache/WriteData
 add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/bus/dcache/dcache/ByteMask
 add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/bus/dcache/dcache/WriteSelLogic/BlankByteMask
 add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/bus/dcache/dcache/WriteSelLogic/DemuxedByteMask
@@ -688,34 +699,21 @@ add wave -noupdate -group spi /testbench/dut/uncoregen/uncore/spi/spi/ChipSelect
 add wave -noupdate -group spi /testbench/dut/uncoregen/uncore/spi/spi/SckMode
 add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/ShiftEdge
 add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/TransmitData
-add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/TransmitShiftReg
-add wave -noupdate -expand -group {fetch buffer} /testbench/dut/core/ifu/fetchbuff/StallD
-add wave -noupdate -expand -group {fetch buffer} /testbench/dut/core/ifu/fetchbuff/FlushD
-add wave -noupdate -expand -group {fetch buffer} /testbench/dut/core/ifu/fetchbuff/WriteData
-add wave -noupdate -expand -group {fetch buffer} /testbench/dut/core/ifu/fetchbuff/ReadData
-add wave -noupdate -expand -group {fetch buffer} /testbench/dut/core/ifu/fetchbuff/FetchBufferStallF
-add wave -noupdate -expand -group {fetch buffer} /testbench/dut/core/ifu/fetchbuff/Readf1
-add wave -noupdate -expand -group {fetch buffer} /testbench/dut/core/ifu/fetchbuff/Readf0
-add wave -noupdate -expand -group {fetch buffer} /testbench/dut/core/ifu/fetchbuff/Readf2
-add wave -noupdate -expand -group {fetch buffer} /testbench/dut/core/ifu/fetchbuff/ReadFetchBuffer
-add wave -noupdate -expand -group {fetch buffer} -radix binary /testbench/dut/core/ifu/fetchbuff/ReadPtr
-add wave -noupdate -expand -group {fetch buffer} -radix binary /testbench/dut/core/ifu/fetchbuff/WritePtr
-add wave -noupdate -expand -group {fetch buffer} /testbench/dut/core/ifu/fetchbuff/Empty
-add wave -noupdate -expand -group {fetch buffer} /testbench/dut/core/ifu/fetchbuff/Full
-add wave -noupdate -expand -group f0 /testbench/dut/core/ifu/fetchbuff/f0/en
-add wave -noupdate -expand -group f0 /testbench/dut/core/ifu/fetchbuff/f0/d
-add wave -noupdate -expand -group f0 /testbench/dut/core/ifu/fetchbuff/f0/q
-add wave -noupdate -expand -group f0 /testbench/dut/core/ifu/fetchbuff/f0/clk
-add wave -noupdate -expand -group f0 /testbench/dut/core/ifu/fetchbuff/f0/reset
-add wave -noupdate -expand -group f2 /testbench/dut/core/ifu/fetchbuff/f1/en
-add wave -noupdate -expand -group f2 /testbench/dut/core/ifu/fetchbuff/f1/d
-add wave -noupdate -expand -group f2 /testbench/dut/core/ifu/fetchbuff/f1/q
-add wave -noupdate -expand -group f3 /testbench/dut/core/ifu/fetchbuff/f2/en
-add wave -noupdate -expand -group f3 /testbench/dut/core/ifu/fetchbuff/f2/d
-add wave -noupdate -expand -group f3 /testbench/dut/core/ifu/fetchbuff/f2/q
+add wave -noupdate -expand /testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadReg
+add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/WriteData
+add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadPtr
+add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/WritePtr
+add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/WriteEnableOH
+add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadFetchBuffer
+add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadData
+add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/WriteEnable
+add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadEnable
+add wave -noupdate -expand -label {Contributors: ReadEnable} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadEnable} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/Empty
+add wave -noupdate -expand -label {Contributors: ReadEnable} -group {Contributors: sim:/testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadEnable} /testbench/dut/core/ifu/fetchbuffer/fetchbuff/StallD
+add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/Full
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 4} {640 ns} 1} {{Cursor 4} {2400 ns} 1} {{Cursor 3} {392 ns} 1} {{Cursor 4} {223860 ns} 1} {{Cursor 5} {404 ns} 0}
-quietly wave cursor active 5
+WaveRestoreCursors {nop@PC0 {2520 ns} 1} {{First PCF != 0} {420 ns} 1} {Mismatch {2510 ns} 1} {{Cursor 6} {2520 ns} 0}
+quietly wave cursor active 4
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
 configure wave -justifyvalue left
@@ -730,4 +728,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {371 ns} {471 ns}
+WaveRestoreZoom {2497 ns} {2523 ns}

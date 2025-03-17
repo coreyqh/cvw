@@ -54,8 +54,10 @@ module fetchbuffer import cvw::*; #(parameter cvw_t P, parameter WIDTH = 32) (
   assign FullRisingEdge = Full & ~FullDelay;
   assign NoStallPCF = FullRisingEdge & ReadEnable; // ???
 
+  // FBMealy FBMealy (.clk, .reset, .Full, .ReadEnable, .NoStallPCF);
+
   assign ReadEnable    = ~StallD & ~Empty;
-  assign WriteEnable   = (~Full | (FullRisingEdge & ReadEnable)) & ~StallFBF ; // "SOME SPECIAL CASE"
+  assign WriteEnable   = (~Full | ~FullDelay) & ~StallFBF ; // TODO: Need to prevent writes that overwrite unread entries... (awkward)
   assign WriteEnableOH = {P.FETCHBUFFER_ENTRIES{WriteEnable}} & WritePtr;
 
   // FIFO entries created with an array of enableable and loadable flip-flops
